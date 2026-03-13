@@ -3,6 +3,9 @@
 import eventlet
 eventlet.monkey_patch()
 
+import eventlet
+eventlet.monkey_patch()
+
 from dotenv import load_dotenv
 load_dotenv()
 
