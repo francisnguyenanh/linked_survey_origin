@@ -1,0 +1,14 @@
+flask==3.0.3
+flask-socketio==5.3.6
+playwright==1.44.0
+python-dotenv==1.0.1
+pydantic==2.7.1
+aiohttp==3.9.5
+apscheduler==3.10.4
+python-slugify==8.0.4
+pytest==8.2.0
+pytest-asyncio==0.23.6
+faker==25.0.0
+eventlet==0.36.1
+chardet==5.2.0
+networkx==3.3

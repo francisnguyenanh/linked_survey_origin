@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Configurator{% endblock %}
+
+{% block content %}
+<div x-data="configuratorApp()" x-init="init()">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-sliders me-2 text-warning"></i>Pattern Configurator — Phase 2</h4>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-outline-warning" @click="newPattern()">
+        <i class="bi bi-plus-lg me-1"></i>New Pattern
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Left: Survey + Questions tree -->
+    <div class="col-lg-5">
+      <div class="card border-secondary h-100">
+        <div class="card-header bg-secondary bg-opacity-25">
+          <i class="bi bi-map me-2 text-info"></i>Survey Questions
+          <select class="form-select form-select-sm bg-dark text-light border-secondary d-inline-block w-auto ms-2"
+                  x-model="selectedSurveyId" @change="loadQuestions()">
+            <option value="">-- Select Survey --</option>
+            <template x-for="m in maps" :key="m.survey_id">
+              <option :value="m.survey_id" x-text="m.survey_id"></option>
+            </template>
+          </select>
+        </div>
+        <div class="card-body p-0" style="max-height:600px;overflow-y:auto">
+          <template x-if="groupedQuestions.length === 0">
+            <p class="text-secondary text-center py-4 small">Select a survey to see its questions.</p>
+          </template>
+          <template x-for="group in groupedQuestions" :key="group.page_id">
+            <div>
+              <div class="px-3 py-2 bg-dark border-bottom border-secondary sticky-top">
+                <span class="text-info fw-semibold small" x-text="group.page_id"></span>
+                <span class="badge bg-secondary ms-2" x-text="group.questions.length + 'q'"></span>
+              </div>
+              <template x-for="q in group.questions" :key="q.q_id">
+                <div class="list-group-item list-group-item-action bg-transparent border-0 py-2 px-3"
+                     :class="activeQId === q.q_id ? 'bg-secondary bg-opacity-25' : ''"
+                     @click="selectQuestion(q)"
+                     x-show="!q.honeypot">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <div class="small text-light" x-text="q.q_id + ': ' + q.label_text?.slice(0,40)"></div>
+                      <span class="badge bg-primary bg-opacity-50 small mt-1" x-text="q.q_type"></span>
+                    </div>
+                    <span x-show="pattern.answers[q.page_id]?.[q.q_id]"
+                          class="badge bg-success bg-opacity-50 small">✓</span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Answer strategy editor + pattern meta -->
+    <div class="col-lg-7">
+
+      <!-- Pattern metadata -->
+      <div class="card border-secondary mb-3">
+        <div class="card-header bg-secondary bg-opacity-25">
+          <i class="bi bi-file-earmark-code me-2 text-warning"></i>Pattern Settings
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small">Pattern Name</label>
+              <input type="text" class="form-control bg-dark text-light border-secondary"
+                     x-model="pattern.pattern_name" placeholder="満足した顧客">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small">UID Strategy</label>
+              <select class="form-select bg-dark text-light border-secondary" x-model="pattern.uid_strategy">
+                <option value="sequential">Sequential</option>
+                <option value="random">Random</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label small">UID Pool (one per line)</label>
+              <textarea class="form-control bg-dark text-light border-secondary" rows="3"
+                        :value="pattern.uid_pool.join('\n')"
+                        @input="pattern.uid_pool = $event.target.value.split('\n').filter(u=>u.trim())"
+                        placeholder="re1280&#10;re1281&#10;re1282"></textarea>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Min Seconds</label>
+              <input type="number" class="form-control bg-dark text-light border-secondary"
+                     x-model.number="pattern.timing.min_total_seconds" min="30">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Max Seconds</label>
+              <input type="number" class="form-control bg-dark text-light border-secondary"
+                     x-model.number="pattern.timing.max_total_seconds" min="60">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Page Delay Min</label>
+              <input type="number" step="0.5" class="form-control bg-dark text-light border-secondary"
+                     x-model.number="pattern.timing.page_delay_min">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Page Delay Max</label>
+              <input type="number" step="0.5" class="form-control bg-dark text-light border-secondary"
+                     x-model.number="pattern.timing.page_delay_max">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Answer strategy editor for selected question -->
+      <div class="card border-secondary mb-3" x-show="activeQuestion">
+        <div class="card-header bg-secondary bg-opacity-25">
+          <i class="bi bi-pencil-fill me-2 text-success"></i>
+          Answer Strategy — <span class="text-success" x-text="activeQuestion?.q_id"></span>
+        </div>
+        <div class="card-body">
+          <div class="small text-secondary mb-3" x-text="activeQuestion?.label_text"></div>
+
+          <div class="mb-3">
+            <label class="form-label small">Strategy</label>
+            <select class="form-select bg-dark text-light border-secondary" x-model="activeStrategy.strategy">
+              <option value="fixed">Fixed Value</option>
+              <option value="random_option">Random Option</option>
+              <option value="random_from_list">Random from List</option>
+              <option value="text_from_list">Text from List</option>
+            </select>
+          </div>
+
+          <!-- Fixed strategy -->
+          <template x-if="activeStrategy.strategy === 'fixed'">
+            <div class="mb-3">
+              <label class="form-label small">Value</label>
+              <template x-if="activeQuestion?.options?.length > 0">
+                <select class="form-select bg-dark text-light border-secondary" x-model="activeStrategy.value">
+                  <template x-for="opt in activeQuestion.options" :key="opt.option_index">
+                    <option :value="opt.option_value" x-text="opt.option_text + ' (' + opt.option_value + ')'"></option>
+                  </template>
+                </select>
+              </template>
+              <template x-if="!activeQuestion?.options?.length">
+                <input type="text" class="form-control bg-dark text-light border-secondary"
+                       x-model="activeStrategy.value">
+              </template>
+            </div>
+          </template>
+
+          <!-- Random from list -->
+          <template x-if="activeStrategy.strategy === 'random_from_list'">
+            <div class="mb-3">
+              <label class="form-label small">Values (comma-separated option values)</label>
+              <input type="text" class="form-control bg-dark text-light border-secondary"
+                     :value="(activeStrategy.values||[]).join(',')"
+                     @input="activeStrategy.values = $event.target.value.split(',').map(v=>v.trim())">
+            </div>
+          </template>
+
+          <!-- Text from list -->
+          <template x-if="activeStrategy.strategy === 'text_from_list'">
+            <div class="mb-3">
+              <label class="form-label small">Text values (one per line)</label>
+              <textarea class="form-control bg-dark text-light border-secondary" rows="4"
+                        :value="(activeStrategy.values||[]).join('\n')"
+                        @input="activeStrategy.values = $event.target.value.split('\n').filter(v=>v.trim())"></textarea>
+            </div>
+          </template>
+
+          <button class="btn btn-sm btn-success" @click="applyStrategy()">
+            <i class="bi bi-check-lg me-1"></i>Apply to Pattern
+          </button>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="d-flex gap-2">
+        <button class="btn btn-warning" @click="savePattern()" :disabled="!pattern.pattern_name">
+          <i class="bi bi-save me-1"></i>Save Pattern
+        </button>
+        <button class="btn btn-outline-info" @click="validatePattern()" :disabled="!pattern.pattern_name">
+          <i class="bi bi-check-circle me-1"></i>Validate
+        </button>
+        <button class="btn btn-outline-secondary" @click="showJsonModal = true">
+          <i class="bi bi-code-slash me-1"></i>View JSON
+        </button>
+      </div>
+
+      <!-- Validation results -->
+      <div class="mt-3" x-show="validationResult !== null">
+        <div class="alert" :class="validationResult?.valid ? 'alert-success' : 'alert-warning'">
+          <template x-if="validationResult?.valid">
+            <span><i class="bi bi-check-circle me-2"></i>Pattern is valid</span>
+          </template>
+          <template x-if="!validationResult?.valid">
+            <div>
+              <i class="bi bi-exclamation-triangle me-2"></i><strong>Warnings:</strong>
+              <ul class="mb-0 mt-1">
+                <template x-for="w in validationResult?.warnings" :key="w">
+                  <li class="small" x-text="w"></li>
+                </template>
+              </ul>
+            </div>
+          </template>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JSON preview modal -->
+  <div class="modal fade" :class="showJsonModal ? 'show d-block' : ''" x-show="showJsonModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content bg-dark border-secondary">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title">Pattern JSON</h5>
+          <button class="btn-close btn-close-white" @click="showJsonModal = false"></button>
+        </div>
+        <div class="modal-body">
+          <pre class="language-json"><code class="language-json" x-text="JSON.stringify(pattern, null, 2)"></code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show" x-show="showJsonModal" @click="showJsonModal = false"></div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/configurator.js') }}"></script>
+{% endblock %}

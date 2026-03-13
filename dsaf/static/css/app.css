@@ -1,0 +1,127 @@
+/* DSAF — Custom styles layered on Bootstrap 5.3 dark theme */
+
+:root {
+  --dsaf-accent: #ffc107;
+  --dsaf-border: rgba(255, 255, 255, 0.12);
+}
+
+body {
+  background-color: #0d1117;
+  color: #e6edf3;
+  font-size: 0.875rem;
+}
+
+/* Navbar refinement */
+.navbar { background-color: #161b22 !important; }
+
+/* Cards */
+.card {
+  background-color: #161b22;
+  border-color: var(--dsaf-border) !important;
+}
+.card-header {
+  border-bottom-color: var(--dsaf-border) !important;
+}
+
+/* List group */
+.list-group-item {
+  background-color: transparent;
+  border-color: var(--dsaf-border);
+  color: #e6edf3;
+}
+.list-group-item:hover {
+  background-color: rgba(255,255,255,0.05) !important;
+  cursor: pointer;
+}
+
+/* Form controls */
+.form-control, .form-select {
+  background-color: #0d1117;
+  border-color: var(--dsaf-border);
+  color: #e6edf3;
+}
+.form-control:focus, .form-select:focus {
+  background-color: #0d1117;
+  border-color: var(--dsaf-accent);
+  color: #e6edf3;
+  box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.2);
+}
+
+/* Tables */
+.table-dark {
+  --bs-table-bg: #161b22;
+  --bs-table-hover-bg: rgba(255,255,255,0.05);
+  border-color: var(--dsaf-border);
+}
+.table-dark th {
+  color: #8b949e;
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Badges refinement */
+.badge { font-weight: 500; letter-spacing: 0.02em; }
+
+/* Log container */
+#log-container {
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  border-radius: 0;
+}
+
+/* Progress bar */
+.progress {
+  background-color: rgba(255,255,255,0.08);
+  border-radius: 4px;
+}
+
+/* Sticky table header */
+.table thead.sticky-top th {
+  top: 0;
+  z-index: 1;
+  background-color: #161b22;
+}
+
+/* Blinking recording indicator */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.blink { animation: blink 1.2s infinite; }
+
+/* Modal backdrop z-index fix */
+.modal-backdrop { z-index: 1040; }
+.modal { z-index: 1050; }
+
+/* Prism code block */
+pre[class*="language-"] {
+  background: #0d1117 !important;
+  border: 1px solid var(--dsaf-border);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0d1117; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+/* Tooltip-style q_id badges */
+.q-id-badge {
+  font-family: monospace;
+  font-size: 0.7rem;
+  background: rgba(56, 139, 253, 0.15);
+  color: #58a6ff;
+  border: 1px solid rgba(56, 139, 253, 0.3);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+/* Alert overrides */
+.alert-dark { background-color: #1c2128; border-color: #30363d; }

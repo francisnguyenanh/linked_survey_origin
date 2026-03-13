@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div x-data="dashboard()" x-init="init()">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-speedometer2 me-2 text-warning"></i>Dashboard</h4>
+    <button class="btn btn-sm btn-outline-secondary" @click="refresh()">
+      <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+    </button>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Survey Maps -->
+    <div class="col-lg-4">
+      <div class="card h-100 border-secondary">
+        <div class="card-header bg-secondary bg-opacity-25 d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-map me-2 text-info"></i>Survey Maps</span>
+          <a href="/mapper" class="btn btn-sm btn-outline-info">
+            <i class="bi bi-plus-lg"></i> New
+          </a>
+        </div>
+        <div class="card-body p-0">
+          <template x-if="maps.length === 0">
+            <p class="text-secondary text-center py-4 small">No maps yet. Start mapping a survey.</p>
+          </template>
+          <ul class="list-group list-group-flush">
+            <template x-for="m in maps" :key="m.survey_id">
+              <li class="list-group-item bg-transparent border-secondary">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <div class="fw-semibold text-light" x-text="m.survey_id"></div>
+                    <div class="small text-secondary" x-text="m.base_url?.slice(0,40) + '…'"></div>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge bg-info bg-opacity-25 text-info me-1"
+                          x-text="m.page_count + ' pages'"></span>
+                    <span class="badge"
+                          :class="m.coverage_pct >= 80 ? 'bg-success' : m.coverage_pct >= 40 ? 'bg-warning text-dark' : 'bg-danger'"
+                          x-text="m.coverage_pct + '%'"></span>
+                  </div>
+                </div>
+                <div class="small text-secondary mt-1" x-text="m.created_at?.slice(0,10)"></div>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patterns -->
+    <div class="col-lg-4">
+      <div class="card h-100 border-secondary">
+        <div class="card-header bg-secondary bg-opacity-25 d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-sliders me-2 text-warning"></i>Patterns</span>
+          <a href="/configurator" class="btn btn-sm btn-outline-warning">
+            <i class="bi bi-plus-lg"></i> New
+          </a>
+        </div>
+        <div class="card-body p-0">
+          <template x-if="patterns.length === 0">
+            <p class="text-secondary text-center py-4 small">No patterns yet. Create a scenario.</p>
+          </template>
+          <ul class="list-group list-group-flush">
+            <template x-for="p in patterns" :key="p.pattern_id">
+              <li class="list-group-item bg-transparent border-secondary">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <div class="fw-semibold text-light" x-text="p.pattern_name"></div>
+                    <div class="small text-secondary" x-text="'Survey: ' + p.linked_survey_id"></div>
+                  </div>
+                  <span class="badge bg-secondary" x-text="p.uid_count + ' UIDs'"></span>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Runs -->
+    <div class="col-lg-4">
+      <div class="card h-100 border-secondary">
+        <div class="card-header bg-secondary bg-opacity-25 d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-play-circle me-2 text-success"></i>Recent Runs</span>
+          <a href="/executor" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-play-fill"></i> Run
+          </a>
+        </div>
+        <div class="card-body p-0">
+          <template x-if="recentRuns.length === 0">
+            <p class="text-secondary text-center py-4 small">No runs yet.</p>
+          </template>
+          <ul class="list-group list-group-flush">
+            <template x-for="r in recentRuns" :key="r.batch_id">
+              <li class="list-group-item bg-transparent border-secondary">
+                <div class="d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="badge"
+                          :class="r.status === 'completed' ? 'bg-success' : r.status === 'running' ? 'bg-primary' : 'bg-danger'"
+                          x-text="r.status"></span>
+                    <span class="small ms-2 text-secondary" x-text="r.batch_id"></span>
+                  </div>
+                  <div class="small text-secondary">
+                    <span class="text-success" x-text="r.succeeded + '✓'"></span>
+                    <span class="text-danger ms-1" x-text="r.failed + '✗'"></span>
+                  </div>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/mapper.js') }}"></script>
+<script>
+function dashboard() {
+  return {
+    maps: [],
+    patterns: [],
+    recentRuns: [],
+
+    async init() { await this.refresh(); },
+
+    async refresh() {
+      try {
+        const [mapsRes, patternsRes] = await Promise.all([
+          fetch('/api/mapper/maps'),
+          fetch('/api/config/patterns'),
+        ]);
+        this.maps = await mapsRes.json();
+        this.patterns = await patternsRes.json();
+      } catch (e) {
+        showToast('Failed to load dashboard data', 'error');
+      }
+    }
+  };
+}
+</script>
+{% endblock %}

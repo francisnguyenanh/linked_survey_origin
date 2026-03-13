@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}DSAF{% endblock %} — Dynamic Survey Automation Framework</title>
+
+  <!-- Bootstrap 5.3 dark -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Prism.js (JSON highlighting) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+  <!-- Custom styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<!-- Top Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom border-secondary">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold text-warning" href="/">
+      <i class="bi bi-robot me-1"></i>DSAF
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item">
+          <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">
+            <i class="bi bi-speedometer2 me-1"></i>Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if '/mapper' in request.path %}active{% endif %}" href="/mapper">
+            <i class="bi bi-map me-1"></i>Mapper
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if '/configurator' in request.path %}active{% endif %}" href="/configurator">
+            <i class="bi bi-sliders me-1"></i>Configurator
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if '/executor' in request.path %}active{% endif %}" href="/executor">
+            <i class="bi bi-play-circle me-1"></i>Executor
+          </a>
+        </li>
+      </ul>
+      <span class="navbar-text text-secondary small">
+        <i class="bi bi-circle-fill text-success me-1" id="status-dot"></i>
+        <span id="status-text">Ready</span>
+      </span>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Content -->
+<main class="container-fluid py-4">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- Toast container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+  <div id="liveToast" class="toast align-items-center text-white border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body" id="toast-body">Message</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/socket.io@4.7.5/client-dist/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+
+<script>
+  // Global toast helper
+  function showToast(msg, type = 'success') {
+    const el = document.getElementById('liveToast');
+    const body = document.getElementById('toast-body');
+    el.className = `toast align-items-center text-white border-0 bg-${type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'success'}`;
+    body.textContent = msg;
+    new bootstrap.Toast(el, { delay: 3500 }).show();
+  }
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
